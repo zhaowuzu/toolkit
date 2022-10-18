@@ -8,36 +8,36 @@ import (
 )
 
 func main() {
-	c := cache.New(10*time.Second, 30*time.Second) // 默认过期时间10s；清理间隔30s，即每30s钟会自动清理过期的键值对
-
-	// 设置一个键值对，过期时间是 3s
-	c.Set("a", "testa", 3*time.Second)
-
-	// 设置一个键值对，采用 New() 时的默认过期时间，即 10s
-	c.Set("foo", "bar", cache.DefaultExpiration)
-
-	// 设置一个键值对，没有过期时间，不会自动过期，需要手动调用 Delete() 才能删除
-	c.Set("baz", 42, cache.NoExpiration)
-
-	v, found := c.Get("a")
-	fmt.Println(v, found) // testa,true
-
-	<-time.After(5 * time.Second) // 延时5s
-
-	v, found = c.Get("a") // nil,false
-	fmt.Println(v, found)
-
-	<-time.After(6 * time.Second)
-	v, found = c.Get("foo") // nil,false
-	fmt.Println(v, found)
-
-	v, found = c.Get("baz") // 42,true
-	fmt.Println(v, found)
+	//c := cache.New(10*time.Second, 30*time.Second) // 默认过期时间10s；清理间隔30s，即每30s钟会自动清理过期的键值对
+	//
+	//// 设置一个键值对，过期时间是 3s
+	//c.Set("a", "testa", 3*time.Second)
+	//
+	//// 设置一个键值对，采用 New() 时的默认过期时间，即 10s
+	//c.Set("foo", "bar", cache.DefaultExpiration)
+	//
+	//// 设置一个键值对，没有过期时间，不会自动过期，需要手动调用 Delete() 才能删除
+	//c.Set("baz", 42, cache.NoExpiration)
+	//
+	//v, found := c.Get("a")
+	//fmt.Println(v, found) // testa,true
+	//
+	//<-time.After(5 * time.Second) // 延时5s
+	//
+	//v, found = c.Get("a") // nil,false
+	//fmt.Println(v, found)
+	//
+	//<-time.After(6 * time.Second)
+	//v, found = c.Get("foo") // nil,false
+	//fmt.Println(v, found)
+	//
+	//v, found = c.Get("baz") // 42,true
+	//fmt.Println(v, found)
 
 	// 完整例子请关注公众号【Golang来啦】，后台发送关键字 gocache 获取
 	//TestCache()
 	//TestCacheTimes()
-	//TestNewFrom()
+	TestNewFrom() // 这个是需要自己进行序列化考虑的，比tFileSerialization要灵活一些
 	//TestOnEvicted()
 	//TestFileSerialization()
 }
@@ -160,6 +160,11 @@ func TestNewFrom() {
 	if b.(int) != 2 {
 		fmt.Println("b is not 2")
 	}
+
+	n := tc.Items()
+	tc1 := cache.NewFrom(cache.DefaultExpiration, 0, n)
+	println(fmt.Sprintf("得到全部：%+v", n))
+	println(fmt.Sprintf("再来一下：%+v", tc1.Items()))
 }
 
 func TestOnEvicted() {
@@ -185,7 +190,7 @@ func TestOnEvicted() {
 }
 
 func TestFileSerialization() {
-	tc := cache.New(cache.DefaultExpiration, 0)
+	tc := cache.New(cache.DefaultExpiration, 0) // 就是永不过期，永不主动清理删除
 	tc.Add("a", "a", cache.DefaultExpiration)
 	tc.Add("b", "b", cache.DefaultExpiration)
 	f, err := ioutil.TempFile("", "go-cache-cache.dat")
